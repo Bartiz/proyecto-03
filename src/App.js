@@ -12,11 +12,26 @@ const hashPassword = (password) => {
   return hash.toString();
 };
 
-// Componente de Login/Registro
+// Categorías predefinidas
+const CATEGORIES = [
+  { id: 'personal', name: 'Personal', icon: '👤', color: '#667eea' },
+  { id: 'supermercado', name: 'Supermercado', icon: '🛒', color: '#4ecdc4' },
+  { id: 'salud', name: 'Salud', icon: '🏥', color: '#ff6b6b' },
+  { id: 'citas', name: 'Citas', icon: '📅', color: '#feca57' },
+  { id: 'reuniones', name: 'Reuniones', icon: '👥', color: '#48dbfb' },
+  { id: 'llamadas', name: 'Llamadas', icon: '📞', color: '#ff9ff3' },
+  { id: 'trabajo', name: 'Trabajo', icon: '💼', color: '#54a0ff' },
+  { id: 'estudios', name: 'Estudios', icon: '📚', color: '#5f27cd' },
+  { id: 'hogar', name: 'Hogar', icon: '🏠', color: '#00d2d3' },
+  { id: 'otros', name: 'Otros', icon: '📝', color: '#6c757d' }
+];
+
+// Componente de Login/Registro mejorado
 const AuthForm = ({ onLogin }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -46,7 +61,11 @@ const AuthForm = ({ onLogin }) => {
     // Si no hay usuarios, crear uno de prueba
     if (storedUsers.length === 0) {
       const defaultUsers = [
-        { email: 'prueba@prueba.com', password: hashPassword('123456') }
+        { 
+          email: 'prueba@prueba.com', 
+          password: hashPassword('123456'),
+          fullName: 'Usuario de Prueba'
+        }
       ];
       saveUsersToStorage(defaultUsers);
       return defaultUsers;
@@ -83,6 +102,11 @@ const AuthForm = ({ onLogin }) => {
       
     } else {
       // Registro
+      if (!fullName.trim()) {
+        setError('El nombre completo es requerido');
+        return;
+      }
+
       if (password.length < 6) {
         setError('La contraseña debe tener al menos 6 caracteres');
         return;
@@ -95,7 +119,11 @@ const AuthForm = ({ onLogin }) => {
         return;
       }
 
-      const newUser = { email, password: hashPassword(password) };
+      const newUser = { 
+        email, 
+        password: hashPassword(password),
+        fullName: fullName.trim()
+      };
       const updatedUsers = [...currentUsers, newUser];
       
       setUsers(updatedUsers);
@@ -107,6 +135,7 @@ const AuthForm = ({ onLogin }) => {
         setIsLogin(true);
         setEmail('');
         setPassword('');
+        setFullName('');
         setSuccess('');
         setError('');
       }, 2000);
@@ -116,6 +145,7 @@ const AuthForm = ({ onLogin }) => {
   const clearForm = () => {
     setEmail('');
     setPassword('');
+    setFullName('');
     setError('');
     setSuccess('');
   };
@@ -128,11 +158,24 @@ const AuthForm = ({ onLogin }) => {
   return (
     <div className="auth-container">
       <div className="auth-header">
-        <h1>To-Do App</h1>
-        <p>Gestiona tus tareas personales</p>
+        <h1>📋 To-Do App</h1>
+        <p>Organiza tus tareas por categorías</p>
       </div>
       
       <form onSubmit={handleSubmit} className="auth-form">
+        {!isLogin && (
+          <div className="form-group">
+            <label>Nombre Completo</label>
+            <input
+              type="text"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              required={!isLogin}
+              placeholder="Tu nombre completo"
+            />
+          </div>
+        )}
+        
         <div className="form-group">
           <label>Correo Electrónico</label>
           <input
@@ -183,11 +226,86 @@ const AuthForm = ({ onLogin }) => {
   );
 };
 
-// Componente de Tarea Individual
-const TaskItem = ({ task, onToggle, onEdit, onDelete }) => {
+// Componente de Categoría
+const CategorySection = ({ category, tasks, onAddTask, onToggleTask, onEditTask, onDeleteTask }) => {
+  const [newTask, setNewTask] = useState('');
+  const [isExpanded, setIsExpanded] = useState(true);
+
+  const handleAddTask = (e) => {
+    e.preventDefault();
+    if (!newTask.trim()) return;
+    
+    onAddTask(newTask.trim(), category.id);
+    setNewTask('');
+  };
+
+  const categoryTasks = tasks.filter(task => task.category === category.id);
+  const completedCount = categoryTasks.filter(task => task.completed).length;
+
   return (
-    <div className="task-item">
+    <div className="category-section">
+      <div 
+        className="category-header" 
+        onClick={() => setIsExpanded(!isExpanded)}
+        style={{ borderLeftColor: category.color }}
+      >
+        <div className="category-info">
+          <span className="category-icon">{category.icon}</span>
+          <span className="category-name">{category.name}</span>
+          <span className="task-count">
+            {completedCount}/{categoryTasks.length}
+          </span>
+        </div>
+        <span className={`expand-icon ${isExpanded ? 'expanded' : ''}`}>▼</span>
+      </div>
+
+      {isExpanded && (
+        <div className="category-content">
+          <form onSubmit={handleAddTask} className="add-task-form">
+            <div className="task-input-group">
+              <input
+                type="text"
+                value={newTask}
+                onChange={(e) => setNewTask(e.target.value)}
+                placeholder={`Nueva tarea en ${category.name.toLowerCase()}...`}
+                className="task-input"
+              />
+              <button type="submit" className="btn-add-task" style={{ backgroundColor: category.color }}>
+                + Agregar
+              </button>
+            </div>
+          </form>
+
+          <div className="tasks-in-category">
+            {categoryTasks.length === 0 ? (
+              <div className="no-tasks-category">
+                No hay tareas en {category.name.toLowerCase()}
+              </div>
+            ) : (
+              categoryTasks.map(task => (
+                <TaskItem
+                  key={task.id}
+                  task={task}
+                  onToggle={onToggleTask}
+                  onEdit={onEditTask}
+                  onDelete={onDeleteTask}
+                  categoryColor={category.color}
+                />
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Componente de Tarea Individual mejorado
+const TaskItem = ({ task, onToggle, onEdit, onDelete, categoryColor }) => {
+  return (
+    <div className={`task-item ${task.completed ? 'completed' : ''}`}>
       <div className="task-content">
+        <div className="task-indicator" style={{ backgroundColor: categoryColor }}></div>
         <div className={`task-text ${task.completed ? 'completed' : ''}`}>
           {task.text}
         </div>
@@ -222,8 +340,8 @@ const TaskItem = ({ task, onToggle, onEdit, onDelete }) => {
 // Componente Principal de Tareas
 const TodoApp = ({ user, onLogout }) => {
   const [tasks, setTasks] = useState([]);
-  const [newTask, setNewTask] = useState('');
   const [taskIdCounter, setTaskIdCounter] = useState(1);
+  const [selectedCategory, setSelectedCategory] = useState('all');
 
   // Cargar tareas del localStorage al inicializar
   useEffect(() => {
@@ -252,20 +370,18 @@ const TodoApp = ({ user, onLogout }) => {
     }
   }, [tasks, user.email]);
 
-  const addTask = (e) => {
-    e.preventDefault();
-    if (!newTask.trim()) return;
-
+  const addTask = (taskText, categoryId) => {
     const task = {
       id: taskIdCounter,
-      text: newTask.trim(),
+      text: taskText,
       completed: false,
-      userId: user.email
+      category: categoryId,
+      userId: user.email,
+      createdAt: new Date().toISOString()
     };
 
     setTasks([...tasks, task]);
     setTaskIdCounter(taskIdCounter + 1);
-    setNewTask('');
   };
 
   const toggleTask = (taskId) => {
@@ -297,46 +413,36 @@ const TodoApp = ({ user, onLogout }) => {
   };
 
   const userTasks = tasks.filter(task => task.userId === user.email);
+  const totalTasks = userTasks.length;
+  const completedTasks = userTasks.filter(task => task.completed).length;
 
   return (
     <div className="todo-container">
       <div className="user-info">
-        <div>Bienvenido, <span className="user-email">{user.email}</span></div>
+        <div className="user-welcome">
+          <span className="welcome-text">¡Hola, {user.fullName}! 👋</span>
+          <span className="user-email">{user.email}</span>
+          <div className="progress-info">
+            {completedTasks}/{totalTasks} tareas completadas
+          </div>
+        </div>
         <button onClick={onLogout} className="btn btn-secondary logout-btn">
           Cerrar Sesión
         </button>
       </div>
 
-      <form onSubmit={addTask} className="task-form">
-        <div className="form-group">
-          <label>Nueva Tarea</label>
-          <input
-            type="text"
-            value={newTask}
-            onChange={(e) => setNewTask(e.target.value)}
-            placeholder="Escribe tu tarea..."
-            required
+      <div className="categories-container">
+        {CATEGORIES.map(category => (
+          <CategorySection
+            key={category.id}
+            category={category}
+            tasks={userTasks}
+            onAddTask={addTask}
+            onToggleTask={toggleTask}
+            onEditTask={editTask}
+            onDeleteTask={deleteTask}
           />
-        </div>
-        <button type="submit" className="btn btn-success">
-          Agregar Tarea
-        </button>
-      </form>
-
-      <div className="tasks-list">
-        {userTasks.length === 0 ? (
-          <div className="no-tasks">No tienes tareas pendientes</div>
-        ) : (
-          userTasks.map(task => (
-            <TaskItem
-              key={task.id}
-              task={task}
-              onToggle={toggleTask}
-              onEdit={editTask}
-              onDelete={deleteTask}
-            />
-          ))
-        )}
+        ))}
       </div>
     </div>
   );
