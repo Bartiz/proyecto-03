@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 
-// Función para hashear contraseñas (simulación simple)
+// Función para hashear contraseñas
 const hashPassword = (password) => {
   let hash = 0;
   for (let i = 0; i < password.length; i++) {
@@ -26,7 +26,7 @@ const CATEGORIES = [
   { id: 'otros', name: 'Otros', icon: '📝', color: '#6c757d' }
 ];
 
-// Componente de Login/Registro con diseño profesional
+// Componente de Login/Registro
 const AuthForm = ({ onLogin }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
@@ -372,7 +372,7 @@ const AuthForm = ({ onLogin }) => {
   );
 };
 
-// Componente de Alertas Flotantes Compactas
+// Componente de Alertas Flotantes
 const FloatingAlerts = ({ tasks }) => {
   const [dismissedAlerts, setDismissedAlerts] = useState(new Set());
   const today = new Date();
