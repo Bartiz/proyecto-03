@@ -15,7 +15,7 @@
 }
 
 /* ================================
-  ESTILOS DE AUTENTICACIÓN PROFESIONAL
+  ESTILOS DE AUTENTICACIÓN
    ================================ */
 
 /* Contenedor principal de autenticación */
@@ -103,7 +103,7 @@
   font-weight: 300;
 }
 
-/* Contenido del formulario profesional */
+/* Contenido del formulario */
 .auth-content-professional {
   padding: 2.5rem;
 }
@@ -128,7 +128,7 @@
   font-weight: 400;
 }
 
-/* Formulario profesional */
+/* Formulario */
 .auth-form-professional {
   display: flex;
   flex-direction: column;
@@ -276,7 +276,7 @@
   text-align: right;
 }
 
-/* Alertas profesionales */
+/* Alertas */
 .alert {
   display: flex;
   align-items: center;
@@ -315,7 +315,7 @@
   }
 }
 
-/* Botón profesional */
+/* Botón  */
 .btn-professional {
   width: 100%;
   padding: 1rem;
@@ -458,7 +458,7 @@
 }
 
 /* ================================
-   ESTILOS DE LA APP DE TAREAS
+  ESTILOS DE LA APP DE TAREAS
    ================================ */
 
 /* Estilos para la App de Tareas */
@@ -794,7 +794,7 @@
 }
 
 /* ================================
-   ESTILOS LEGACY (para compatibilidad)
+  ESTILOS LEGACY (para compatibilidad)
    ================================ */
 
 /* Formularios legacy */
@@ -897,7 +897,7 @@ input[type="text"]:focus {
 }
 
 /* ================================
-   ANIMACIONES Y EFECTOS
+  ANIMACIONES Y EFECTOS
    ================================ */
 
 @keyframes shake {
@@ -949,7 +949,7 @@ input[type="text"]:focus {
 }
 
 /* ================================
-   SCROLLBAR PERSONALIZADO
+  SCROLLBAR PERSONALIZADO
    ================================ */
 
 .categories-container::-webkit-scrollbar {
@@ -971,7 +971,7 @@ input[type="text"]:focus {
 }
 
 /* ================================
-   RESPONSIVE DESIGN
+  RESPONSIVE DESIGN
    ================================ */
 
 /* Laptops grandes (1440px+) */
@@ -1139,7 +1139,7 @@ input[type="text"]:focus {
   }
 }
 
-/* Estadísticas mejoradas en el header */
+/* Estadísticas en el header */
 .progress-info {
   font-size: 0.8rem;
   font-weight: 500;
@@ -1273,7 +1273,7 @@ input[type="text"]:focus {
   transition: all 0.3s ease;
 }
 
-/* Estilos para drag and drop (preparación futura) */
+/* Estilos para drag and drop */
 .task-item-extended.dragging {
   opacity: 0.5;
   transform: rotate(5deg);
@@ -1315,7 +1315,7 @@ input[type="text"]:focus {
     gap: 0.25rem;
   }
 }/* ================================
-   ESTILOS PARA FECHAS LÍMITE Y ALERTAS
+  ESTILOS PARA FECHAS LÍMITE Y ALERTAS
    ================================ */
 
 /* Formulario extendido para agregar tareas */
@@ -1651,10 +1651,10 @@ input[type="text"]:focus {
 }
 
 /* ================================
-   ALERTAS FLOTANTES COMPACTAS
+  ALERTAS FLOTANTES
    ================================ */
 
-   .floating-alerts {
+  .floating-alerts {
     position: fixed;
     top: 20px;
     right: 20px;
@@ -1791,7 +1791,7 @@ input[type="text"]:focus {
   }
   
   /* ================================
-     ANIMACIONES
+    ANIMACIONES
      ================================ */
   
   @keyframes slideInRight {
@@ -1826,7 +1826,7 @@ input[type="text"]:focus {
   }
   
   /* ================================
-     RESPONSIVE PARA ALERTAS FLOTANTES COMPACTAS
+    RESPONSIVE PARA ALERTAS FLOTANTES
      ================================ */
   
   @media (max-width: 768px) {
@@ -1900,13 +1900,13 @@ input[type="text"]:focus {
   }
   
   /* ================================
-     EFECTOS ESPECIALES AJUSTADOS
+    EFECTOS ESPECIALES
      ================================ */
   
-  /* Efecto de pulsación para alertas críticas (más sutil) */
+  /* Efecto de pulsación para alertas críticas */
   .floating-alert.overdue {
     animation: slideInRight 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55), 
-               subtlePulse 3s ease-in-out 2s infinite;
+              subtlePulse 3s ease-in-out 2s infinite;
   }
   
   @keyframes subtlePulse {
@@ -1922,7 +1922,7 @@ input[type="text"]:focus {
     }
   }
   
-  /* Efecto de brillo sutil para alertas de hoy (más discreto) */
+  /* Efecto de brillo sutil para alertas de hoy */
   .floating-alert.today::before {
     content: '';
     position: absolute;
@@ -1945,7 +1945,7 @@ input[type="text"]:focus {
     }
   }
   
-  /* Indicador de progreso para auto-dismiss (opcional) */
+  /* Indicador de progreso para auto-dismiss */
   .floating-alert.auto-dismiss::after {
     content: '';
     position: absolute;
@@ -1985,7 +1985,7 @@ input[type="text"]:focus {
     background: rgba(102, 126, 234, 0.1);
   }
   
-  /* Dark mode support (preparación futura) */
+  /* Dark mode support */
   @media (prefers-color-scheme: dark) {
     .floating-alert {
       background: #2d3748;
