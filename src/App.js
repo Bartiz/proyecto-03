@@ -19,9 +19,45 @@ const AuthForm = ({ onLogin }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [users, setUsers] = useState([
-    { email: 'test@example.com', password: hashPassword('123456') }
-  ]);
+
+  // Función para obtener usuarios del localStorage
+  const getUsersFromStorage = () => {
+    try {
+      const storedUsers = localStorage.getItem('todoapp_users');
+      return storedUsers ? JSON.parse(storedUsers) : [];
+    } catch (error) {
+      console.error('Error al leer usuarios del localStorage:', error);
+      return [];
+    }
+  };
+
+  // Función para guardar usuarios en localStorage
+  const saveUsersToStorage = (users) => {
+    try {
+      localStorage.setItem('todoapp_users', JSON.stringify(users));
+    } catch (error) {
+      console.error('Error al guardar usuarios en localStorage:', error);
+    }
+  };
+
+  // Inicializar usuarios desde localStorage
+  const [users, setUsers] = useState(() => {
+    const storedUsers = getUsersFromStorage();
+    // Si no hay usuarios, crear uno de prueba
+    if (storedUsers.length === 0) {
+      const defaultUsers = [
+        { email: 'prueba@prueba.com', password: hashPassword('123456') }
+      ];
+      saveUsersToStorage(defaultUsers);
+      return defaultUsers;
+    }
+    return storedUsers;
+  });
+
+  // Actualizar localStorage cuando cambie el estado de usuarios
+  useEffect(() => {
+    saveUsersToStorage(users);
+  }, [users]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -29,13 +65,22 @@ const AuthForm = ({ onLogin }) => {
     setSuccess('');
 
     if (isLogin) {
-      // Login
-      const user = users.find(u => u.email === email);
-      if (!user || user.password !== hashPassword(password)) {
-        setError('Credenciales incorrectas');
+      // Login - Validar que el usuario exista
+      const currentUsers = getUsersFromStorage();
+      const user = currentUsers.find(u => u.email === email);
+      
+      if (!user) {
+        setError('Este correo no está registrado. Por favor, regístrate primero.');
         return;
       }
+      
+      if (user.password !== hashPassword(password)) {
+        setError('Contraseña incorrecta');
+        return;
+      }
+      
       onLogin(user);
+      
     } else {
       // Registro
       if (password.length < 6) {
@@ -43,21 +88,41 @@ const AuthForm = ({ onLogin }) => {
         return;
       }
 
-      if (users.find(user => user.email === email)) {
-        setError('Este correo ya está registrado');
+      const currentUsers = getUsersFromStorage();
+      
+      if (currentUsers.find(user => user.email === email)) {
+        setError('Este correo ya está registrado. Puedes iniciar sesión.');
         return;
       }
 
       const newUser = { email, password: hashPassword(password) };
-      setUsers([...users, newUser]);
-      setSuccess('Usuario registrado exitosamente');
+      const updatedUsers = [...currentUsers, newUser];
+      
+      setUsers(updatedUsers);
+      saveUsersToStorage(updatedUsers);
+      
+      setSuccess('¡Usuario registrado exitosamente! Puedes iniciar sesión ahora.');
+      
       setTimeout(() => {
         setIsLogin(true);
         setEmail('');
         setPassword('');
         setSuccess('');
-      }, 1500);
+        setError('');
+      }, 2000);
     }
+  };
+
+  const clearForm = () => {
+    setEmail('');
+    setPassword('');
+    setError('');
+    setSuccess('');
+  };
+
+  const switchMode = () => {
+    setIsLogin(!isLogin);
+    clearForm();
   };
 
   return (
@@ -75,6 +140,7 @@ const AuthForm = ({ onLogin }) => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            placeholder="ejemplo@correo.com"
           />
         </div>
         
@@ -86,6 +152,7 @@ const AuthForm = ({ onLogin }) => {
             onChange={(e) => setPassword(e.target.value)}
             required
             minLength={isLogin ? undefined : 6}
+            placeholder={isLogin ? "Tu contraseña" : "Mínimo 6 caracteres"}
           />
         </div>
         
@@ -100,12 +167,17 @@ const AuthForm = ({ onLogin }) => {
       <div className="switch-form">
         <a href="#" onClick={(e) => {
           e.preventDefault();
-          setIsLogin(!isLogin);
-          setError('');
-          setSuccess('');
+          switchMode();
         }}>
           {isLogin ? '¿No tienes cuenta? Regístrate' : '¿Ya tienes cuenta? Inicia sesión'}
         </a>
+      </div>
+      
+      {/* Información de usuario de prueba */}
+      <div className="test-user-info">
+        <p><strong>Usuario de prueba:</strong></p>
+        <p>Email: prueba@prueba.com</p>
+        <p>Contraseña: 123456</p>
       </div>
     </div>
   );
@@ -153,6 +225,33 @@ const TodoApp = ({ user, onLogout }) => {
   const [newTask, setNewTask] = useState('');
   const [taskIdCounter, setTaskIdCounter] = useState(1);
 
+  // Cargar tareas del localStorage al inicializar
+  useEffect(() => {
+    try {
+      const storedTasks = localStorage.getItem(`todoapp_tasks_${user.email}`);
+      if (storedTasks) {
+        const parsedTasks = JSON.parse(storedTasks);
+        setTasks(parsedTasks);
+        // Establecer el contador basado en el ID más alto
+        if (parsedTasks.length > 0) {
+          const maxId = Math.max(...parsedTasks.map(task => task.id));
+          setTaskIdCounter(maxId + 1);
+        }
+      }
+    } catch (error) {
+      console.error('Error al cargar tareas del localStorage:', error);
+    }
+  }, [user.email]);
+
+  // Guardar tareas en localStorage cuando cambien
+  useEffect(() => {
+    try {
+      localStorage.setItem(`todoapp_tasks_${user.email}`, JSON.stringify(tasks));
+    } catch (error) {
+      console.error('Error al guardar tareas en localStorage:', error);
+    }
+  }, [tasks, user.email]);
+
   const addTask = (e) => {
     e.preventDefault();
     if (!newTask.trim()) return;
@@ -192,7 +291,9 @@ const TodoApp = ({ user, onLogout }) => {
   };
 
   const deleteTask = (taskId) => {
-    setTasks(tasks.filter(task => task.id !== taskId));
+    if (window.confirm('¿Estás seguro de que quieres eliminar esta tarea?')) {
+      setTasks(tasks.filter(task => task.id !== taskId));
+    }
   };
 
   const userTasks = tasks.filter(task => task.userId === user.email);

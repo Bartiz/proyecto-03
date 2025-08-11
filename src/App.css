@@ -341,3 +341,37 @@ input[type="text"]:focus {
 .tasks-list::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
 }
+
+.test-user-info {
+  background: #e8f4fd;
+  border: 1px solid #b8daff;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem 2rem 2rem;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.test-user-info p {
+  margin: 0.25rem 0;
+  color: #0c5460;
+}
+
+.test-user-info strong {
+  color: #155724;
+}
+
+input::placeholder {
+  color: #6c757d;
+  opacity: 0.8;
+}
+
+.error {
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
