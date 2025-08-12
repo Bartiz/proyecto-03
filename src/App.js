@@ -26,7 +26,94 @@ const CATEGORIES = [
   { id: 'otros', name: 'Otros', icon: '📝', color: '#6c757d' }
 ];
 
-// Componente de Login/Registro
+// Utilidades para fechas y horas
+const DateTimeUtils = {
+  // Obtener fecha y hora actual en formato para inputs
+  getCurrentDateTime: () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    
+    return {
+      date: `${year}-${month}-${day}`,
+      time: `${hours}:${minutes}`,
+      datetime: `${year}-${month}-${day}T${hours}:${minutes}`
+    };
+  },
+
+  // Formatear fecha y hora para mostrar
+  formatDateTime: (dateString, timeString) => {
+    if (!dateString) return '';
+    
+    const date = new Date(dateString);
+    const dateFormatted = date.toLocaleDateString('es-ES', { 
+      day: '2-digit', 
+      month: '2-digit', 
+      year: 'numeric' 
+    });
+
+    if (timeString) {
+      return `${dateFormatted} a las ${timeString}`;
+    }
+    
+    return dateFormatted;
+  },
+
+  // Combinar fecha y hora en un objeto Date
+  combineDateTime: (dateString, timeString) => {
+    if (!dateString) return null;
+    
+    if (timeString) {
+      return new Date(`${dateString}T${timeString}`);
+    }
+    
+    return new Date(dateString);
+  },
+
+  // Obtener estado de la fecha límite con hora
+  getDeadlineStatus: (dateString, timeString) => {
+    if (!dateString) return null;
+    
+    const now = new Date();
+    const deadline = DateTimeUtils.combineDateTime(dateString, timeString);
+    const diffMs = deadline - now;
+    const diffHours = diffMs / (1000 * 60 * 60);
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    
+    if (diffMs < 0) {
+      const overdueDays = Math.abs(Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+      const overdueHours = Math.abs(Math.floor(diffMs / (1000 * 60 * 60))) % 24;
+      
+      let overdueText = 'Vencida';
+      if (overdueDays > 0) {
+        overdueText += ` (${overdueDays} día${overdueDays > 1 ? 's' : ''})`;
+      } else if (overdueHours > 0) {
+        overdueText += ` (${overdueHours} hora${overdueHours > 1 ? 's' : ''})`;
+      }
+      
+      return { status: 'overdue', text: overdueText, color: '#ff4757', urgent: true };
+    } else if (diffHours < 1) {
+      const minutes = Math.floor(diffMs / (1000 * 60));
+      return { status: 'urgent', text: `${minutes} min`, color: '#ff3742', urgent: true };
+    } else if (diffHours < 24) {
+      const hours = Math.floor(diffHours);
+      return { status: 'today', text: `${hours}h`, color: '#ff6b35', urgent: true };
+    } else if (diffDays === 1) {
+      return { status: 'tomorrow', text: 'Mañana', color: '#f39c12', urgent: false };
+    } else if (diffDays <= 3) {
+      return { status: 'soon', text: `${diffDays} días`, color: '#f39c12', urgent: false };
+    } else if (diffDays <= 7) {
+      return { status: 'week', text: `${diffDays} días`, color: '#3498db', urgent: false };
+    } else {
+      return { status: 'future', text: `${diffDays} días`, color: '#95a5a6', urgent: false };
+    }
+  }
+};
+
+// Componente de Login/Registro (sin cambios)
 const AuthForm = ({ onLogin }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
@@ -37,7 +124,6 @@ const AuthForm = ({ onLogin }) => {
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Función para obtener usuarios del localStorage
   const getUsersFromStorage = () => {
     try {
       const storedUsers = localStorage.getItem('todoapp_users');
@@ -48,7 +134,6 @@ const AuthForm = ({ onLogin }) => {
     }
   };
 
-  // Función para guardar usuarios en localStorage
   const saveUsersToStorage = (users) => {
     try {
       localStorage.setItem('todoapp_users', JSON.stringify(users));
@@ -57,10 +142,8 @@ const AuthForm = ({ onLogin }) => {
     }
   };
 
-  // Inicializar usuarios desde localStorage
   const [users, setUsers] = useState(() => {
     const storedUsers = getUsersFromStorage();
-    // Si no hay usuarios, crear uno de prueba
     if (storedUsers.length === 0) {
       const defaultUsers = [
         { 
@@ -75,12 +158,10 @@ const AuthForm = ({ onLogin }) => {
     return storedUsers;
   });
 
-  // Actualizar localStorage cuando cambie el estado de usuarios
   useEffect(() => {
     saveUsersToStorage(users);
   }, [users]);
 
-  // Validaciones en tiempo real
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
@@ -101,11 +182,9 @@ const AuthForm = ({ onLogin }) => {
     setSuccess('');
     setIsLoading(true);
 
-    // Simular delay de red
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     if (isLogin) {
-      // Login - Validar que el usuario exista
       const currentUsers = getUsersFromStorage();
       const user = currentUsers.find(u => u.email === email);
       
@@ -127,7 +206,6 @@ const AuthForm = ({ onLogin }) => {
       }, 500);
       
     } else {
-      // Registro
       if (!fullName.trim()) {
         setError('El nombre completo es requerido');
         setIsLoading(false);
@@ -199,7 +277,6 @@ const AuthForm = ({ onLogin }) => {
   return (
     <div className="auth-wrapper">
       <div className="auth-container-professional">
-        {/* Header profesional */}
         <div className="auth-header-professional">
           <div className="company-logo">
             <div className="logo-icon">📋</div>
@@ -210,7 +287,6 @@ const AuthForm = ({ onLogin }) => {
           </div>
         </div>
 
-        {/* Contenido del formulario */}
         <div className="auth-content-professional">
           <div className="form-header">
             <h2>{isLogin ? 'Iniciar Sesión' : 'Crear Cuenta'}</h2>
@@ -291,7 +367,6 @@ const AuthForm = ({ onLogin }) => {
                 </button>
               </div>
               
-              {/* Indicador de fuerza de contraseña */}
               {!isLogin && password && (
                 <div className="password-strength">
                   <div className="strength-bar">
@@ -354,7 +429,6 @@ const AuthForm = ({ onLogin }) => {
             </p>
           </div>
           
-          {/* Credenciales de prueba */}
           <div className="demo-credentials">
             <h4>Cuenta de demostración:</h4>
             <div className="demo-info">
@@ -372,40 +446,40 @@ const AuthForm = ({ onLogin }) => {
   );
 };
 
-// Componente de Alertas Flotantes
+// Componente de Alertas Flotantes mejorado
 const FloatingAlerts = ({ tasks }) => {
   const [dismissedAlerts, setDismissedAlerts] = useState(new Set());
-  const today = new Date();
-  const todayString = today.toISOString().split('T')[0];
+  const now = new Date();
   
   // Tareas vencidas
-  const overdueTasks = tasks.filter(task => 
-    !task.completed && 
-    task.deadline && 
-    new Date(task.deadline) < today
-  );
+  const overdueTasks = tasks.filter(task => {
+    if (task.completed || !task.deadline) return false;
+    const deadline = DateTimeUtils.combineDateTime(task.deadline, task.deadlineTime);
+    return deadline < now;
+  });
   
+  // Tareas urgentes (próximas 2 horas)
+  const urgentTasks = tasks.filter(task => {
+    if (task.completed || !task.deadline) return false;
+    const deadline = DateTimeUtils.combineDateTime(task.deadline, task.deadlineTime);
+    const diffMs = deadline - now;
+    const diffHours = diffMs / (1000 * 60 * 60);
+    return diffHours > 0 && diffHours <= 2;
+  });
+
   // Tareas de hoy
+  const todayString = now.toISOString().split('T')[0];
   const todayTasks = tasks.filter(task => 
     !task.completed && 
-    task.deadline === todayString
-  );
-
-  // Tareas de mañana
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const tomorrowString = tomorrow.toISOString().split('T')[0];
-  
-  const tomorrowTasks = tasks.filter(task => 
-    !task.completed && 
-    task.deadline === tomorrowString
+    task.deadline === todayString &&
+    !urgentTasks.includes(task) &&
+    !overdueTasks.includes(task)
   );
 
   const dismissAlert = (alertType) => {
     setDismissedAlerts(prev => new Set([...prev, alertType]));
   };
 
-  // Auto-reset dismissed alerts cuando cambien las tareas
   useEffect(() => {
     setDismissedAlerts(new Set());
   }, [tasks.length]);
@@ -416,7 +490,7 @@ const FloatingAlerts = ({ tasks }) => {
         <div className="floating-alert overdue">
           <div className="float-content">
             <div className="float-header">
-              <span className="float-icon">⚠️</span>
+              <span className="float-icon">🚨</span>
               <span className="float-title">
                 {overdueTasks.length} vencida{overdueTasks.length > 1 ? 's' : ''}
               </span>
@@ -433,6 +507,35 @@ const FloatingAlerts = ({ tasks }) => {
                 {overdueTasks.map(task => (
                   <div key={task.id} className="float-task">
                     {task.text}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {urgentTasks.length > 0 && !dismissedAlerts.has('urgent') && (
+        <div className="floating-alert urgent">
+          <div className="float-content">
+            <div className="float-header">
+              <span className="float-icon">⏰</span>
+              <span className="float-title">
+                {urgentTasks.length} urgente{urgentTasks.length > 1 ? 's' : ''}
+              </span>
+              <button 
+                className="float-dismiss"
+                onClick={() => dismissAlert('urgent')}
+                title="Cerrar"
+              >
+                ✕
+              </button>
+            </div>
+            {urgentTasks.length <= 2 && (
+              <div className="float-tasks">
+                {urgentTasks.map(task => (
+                  <div key={task.id} className="float-task">
+                    {task.text} - {DateTimeUtils.formatDateTime(task.deadline, task.deadlineTime)}
                   </div>
                 ))}
               </div>
@@ -462,35 +565,7 @@ const FloatingAlerts = ({ tasks }) => {
                 {todayTasks.map(task => (
                   <div key={task.id} className="float-task">
                     {task.text}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {tomorrowTasks.length > 0 && !dismissedAlerts.has('tomorrow') && (
-        <div className="floating-alert tomorrow">
-          <div className="float-content">
-            <div className="float-header">
-              <span className="float-icon">⏰</span>
-              <span className="float-title">
-                {tomorrowTasks.length} mañana
-              </span>
-              <button 
-                className="float-dismiss"
-                onClick={() => dismissAlert('tomorrow')}
-                title="Cerrar"
-              >
-                ✕
-              </button>
-            </div>
-            {tomorrowTasks.length <= 2 && (
-              <div className="float-tasks">
-                {tomorrowTasks.map(task => (
-                  <div key={task.id} className="float-task">
-                    {task.text}
+                    {task.deadlineTime && ` - ${task.deadlineTime}`}
                   </div>
                 ))}
               </div>
@@ -502,33 +577,8 @@ const FloatingAlerts = ({ tasks }) => {
   );
 };
 
-// Componente de Tarea Individual con fechas límite y alertas
+// Componente de Tarea Individual mejorado
 const TaskItemExtended = ({ task, onToggle, onEdit, onDelete, categoryColor }) => {
-  // Función para obtener el estado de la fecha límite
-  const getDeadlineStatus = (deadline) => {
-    if (!deadline) return null;
-    
-    const today = new Date();
-    const deadlineDate = new Date(deadline);
-    const diffTime = deadlineDate - today;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays < 0) {
-      return { status: 'overdue', text: 'Vencida', color: '#ff4757', days: Math.abs(diffDays) };
-    } else if (diffDays === 0) {
-      return { status: 'today', text: 'Hoy', color: '#ff6b35', days: 0 };
-    } else if (diffDays === 1) {
-      return { status: 'tomorrow', text: 'Mañana', color: '#f39c12', days: 1 };
-    } else if (diffDays <= 3) {
-      return { status: 'soon', text: `${diffDays} días`, color: '#f39c12', days: diffDays };
-    } else if (diffDays <= 7) {
-      return { status: 'week', text: `${diffDays} días`, color: '#3498db', days: diffDays };
-    } else {
-      return { status: 'future', text: `${diffDays} días`, color: '#95a5a6', days: diffDays };
-    }
-  };
-
-  // Función para obtener el color de la prioridad
   const getPriorityColor = (priority) => {
     switch (priority) {
       case 'high': return '#ff4757';
@@ -538,7 +588,6 @@ const TaskItemExtended = ({ task, onToggle, onEdit, onDelete, categoryColor }) =
     }
   };
 
-  // Función para obtener el icono de prioridad
   const getPriorityIcon = (priority) => {
     switch (priority) {
       case 'high': return '🔴';
@@ -548,20 +597,9 @@ const TaskItemExtended = ({ task, onToggle, onEdit, onDelete, categoryColor }) =
     }
   };
 
-  const deadlineStatus = getDeadlineStatus(task.deadline);
+  const deadlineStatus = DateTimeUtils.getDeadlineStatus(task.deadline, task.deadlineTime);
   const priorityColor = getPriorityColor(task.priority);
   const priorityIcon = getPriorityIcon(task.priority);
-
-  // Formatear fecha para mostrar
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('es-ES', { 
-      day: '2-digit', 
-      month: '2-digit', 
-      year: 'numeric' 
-    });
-  };
 
   return (
     <div className={`task-item-extended ${task.completed ? 'completed' : ''} ${deadlineStatus?.status || ''}`}>
@@ -584,9 +622,11 @@ const TaskItemExtended = ({ task, onToggle, onEdit, onDelete, categoryColor }) =
             <div className="task-deadline" style={{ color: deadlineStatus.color }}>
               <span className="deadline-icon">📅</span>
               <span className="deadline-text">
-                {formatDate(task.deadline)} • {deadlineStatus.text}
-                {deadlineStatus.status === 'overdue' && ` (${deadlineStatus.days} días)`}
+                {DateTimeUtils.formatDateTime(task.deadline, task.deadlineTime)} • {deadlineStatus.text}
               </span>
+              {deadlineStatus.urgent && (
+                <span className="deadline-urgent">⚡</span>
+              )}
             </div>
           )}
         </div>
@@ -619,12 +659,14 @@ const TaskItemExtended = ({ task, onToggle, onEdit, onDelete, categoryColor }) =
   );
 };
 
-// Componente de Categoría con fechas límite
+// Componente de Categoría mejorado
 const CategorySection = ({ category, tasks, onAddTask, onToggleTask, onEditTask, onDeleteTask }) => {
   const [newTask, setNewTask] = useState('');
-  const [newTaskDeadline, setNewTaskDeadline] = useState('');
+  const [newTaskDate, setNewTaskDate] = useState('');
+  const [newTaskTime, setNewTaskTime] = useState('');
   const [newTaskPriority, setNewTaskPriority] = useState('medium');
   const [isExpanded, setIsExpanded] = useState(true);
+  const [showTimeField, setShowTimeField] = useState(false);
 
   const handleAddTask = (e) => {
     e.preventDefault();
@@ -632,30 +674,71 @@ const CategorySection = ({ category, tasks, onAddTask, onToggleTask, onEditTask,
     
     const taskData = {
       text: newTask.trim(),
-      deadline: newTaskDeadline || null,
+      deadline: newTaskDate || null,
+      deadlineTime: (newTaskDate && newTaskTime) ? newTaskTime : null,
       priority: newTaskPriority
     };
     
     onAddTask(taskData, category.id);
     setNewTask('');
-    setNewTaskDeadline('');
+    setNewTaskDate('');
+    setNewTaskTime('');
     setNewTaskPriority('medium');
+    setShowTimeField(false);
   };
 
   const categoryTasks = tasks.filter(task => task.category === category.id);
   const completedCount = categoryTasks.filter(task => task.completed).length;
 
-  // Función para obtener la fecha mínima (hoy)
   const getTodayDate = () => {
-    const today = new Date();
-    return today.toISOString().split('T')[0];
+    return DateTimeUtils.getCurrentDateTime().date;
   };
 
-  // Ordenar tareas por prioridad y fecha límite
+  const getCurrentTime = () => {
+    return DateTimeUtils.getCurrentDateTime().time;
+  };
+
+  // Función para autocompletar hora cuando se selecciona fecha de hoy
+  const handleDateChange = (e) => {
+    const selectedDate = e.target.value;
+    setNewTaskDate(selectedDate);
+    
+    const today = getTodayDate();
+    if (selectedDate === today) {
+      setShowTimeField(true);
+      if (!newTaskTime) {
+        setNewTaskTime(getCurrentTime());
+      }
+    } else {
+      setShowTimeField(false);
+      setNewTaskTime('');
+    }
+  };
+
+  // Ordenar tareas por urgencia, prioridad y fecha límite
   const sortedTasks = categoryTasks.sort((a, b) => {
     // Primero por completado (no completadas primero)
     if (a.completed !== b.completed) {
       return a.completed ? 1 : -1;
+    }
+    
+    // Luego por urgencia de fecha límite
+    const aStatus = DateTimeUtils.getDeadlineStatus(a.deadline, a.deadlineTime);
+    const bStatus = DateTimeUtils.getDeadlineStatus(b.deadline, b.deadlineTime);
+    
+    if (aStatus && bStatus) {
+      const urgencyOrder = {
+        'overdue': 5,
+        'urgent': 4,
+        'today': 3,
+        'tomorrow': 2,
+        'soon': 1,
+        'week': 0,
+        'future': -1
+      };
+      
+      const urgencyDiff = (urgencyOrder[aStatus.status] || 0) - (urgencyOrder[bStatus.status] || 0);
+      if (urgencyDiff !== 0) return -urgencyDiff;
     }
     
     // Luego por prioridad
@@ -665,7 +748,9 @@ const CategorySection = ({ category, tasks, onAddTask, onToggleTask, onEditTask,
     
     // Finalmente por fecha límite (más próximas primero)
     if (a.deadline && b.deadline) {
-      return new Date(a.deadline) - new Date(b.deadline);
+      const aDeadline = DateTimeUtils.combineDateTime(a.deadline, a.deadlineTime);
+      const bDeadline = DateTimeUtils.combineDateTime(b.deadline, b.deadlineTime);
+      return aDeadline - bDeadline;
     }
     if (a.deadline) return -1;
     if (b.deadline) return 1;
@@ -707,12 +792,24 @@ const CategorySection = ({ category, tasks, onAddTask, onToggleTask, onEditTask,
                   <label className="task-option-label">📅 Fecha límite:</label>
                   <input
                     type="date"
-                    value={newTaskDeadline}
-                    onChange={(e) => setNewTaskDeadline(e.target.value)}
+                    value={newTaskDate}
+                    onChange={handleDateChange}
                     className="task-date-input"
                     min={getTodayDate()}
                   />
                 </div>
+                
+                {(showTimeField || newTaskTime) && (
+                  <div className="task-option">
+                    <label className="task-option-label">🕐 Hora límite:</label>
+                    <input
+                      type="time"
+                      value={newTaskTime}
+                      onChange={(e) => setNewTaskTime(e.target.value)}
+                      className="task-time-input"
+                    />
+                  </div>
+                )}
                 
                 <div className="task-option">
                   <label className="task-option-label">⚡ Prioridad:</label>
@@ -726,6 +823,21 @@ const CategorySection = ({ category, tasks, onAddTask, onToggleTask, onEditTask,
                     <option value="high">🔴 Alta</option>
                   </select>
                 </div>
+                
+                {newTaskDate && !showTimeField && (
+                  <div className="task-option">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowTimeField(true);
+                        setNewTaskTime(getCurrentTime());
+                      }}
+                      className="btn-add-time"
+                    >
+                      ➕ Agregar hora
+                    </button>
+                  </div>
+                )}
               </div>
               
               <button type="submit" className="btn-add-task-extended" style={{ backgroundColor: category.color }}>
@@ -758,7 +870,7 @@ const CategorySection = ({ category, tasks, onAddTask, onToggleTask, onEditTask,
   );
 };
 
-// Componente Principal de Tareas con alertas flotantes
+// Componente Principal de Tareas
 const TodoApp = ({ user, onLogout }) => {
   const [tasks, setTasks] = useState([]);
   const [taskIdCounter, setTaskIdCounter] = useState(1);
@@ -770,7 +882,6 @@ const TodoApp = ({ user, onLogout }) => {
       if (storedTasks) {
         const parsedTasks = JSON.parse(storedTasks);
         setTasks(parsedTasks);
-        // Establecer el contador basado en el ID más alto
         if (parsedTasks.length > 0) {
           const maxId = Math.max(...parsedTasks.map(task => task.id));
           setTaskIdCounter(maxId + 1);
@@ -793,12 +904,13 @@ const TodoApp = ({ user, onLogout }) => {
   const addTask = (taskData, categoryId) => {
     const task = {
       id: taskIdCounter,
-      text: taskData.text || taskData, // Compatibilidad con versión anterior
+      text: taskData.text || taskData,
       completed: false,
       category: categoryId,
       userId: user.email,
       createdAt: new Date().toISOString(),
       deadline: taskData.deadline || null,
+      deadlineTime: taskData.deadlineTime || null,
       priority: taskData.priority || 'medium'
     };
 
@@ -838,15 +950,28 @@ const TodoApp = ({ user, onLogout }) => {
   const totalTasks = userTasks.length;
   const completedTasks = userTasks.filter(task => task.completed).length;
 
-  // Estadísticas adicionales
+  // Estadísticas mejoradas
   const pendingTasks = userTasks.filter(task => !task.completed);
-  const overdueTasks = pendingTasks.filter(task => 
-    task.deadline && new Date(task.deadline) < new Date()
-  ).length;
+  const now = new Date();
+  
+  const overdueTasks = pendingTasks.filter(task => {
+    if (!task.deadline) return false;
+    const deadline = DateTimeUtils.combineDateTime(task.deadline, task.deadlineTime);
+    return deadline < now;
+  }).length;
+
+  const urgentTasks = pendingTasks.filter(task => {
+    if (!task.deadline) return false;
+    const deadline = DateTimeUtils.combineDateTime(task.deadline, task.deadlineTime);
+    const diffMs = deadline - now;
+    const diffHours = diffMs / (1000 * 60 * 60);
+    return diffHours > 0 && diffHours <= 2;
+  }).length;
+
   const todayTasks = pendingTasks.filter(task => {
     if (!task.deadline) return false;
-    const today = new Date().toISOString().split('T')[0];
-    return task.deadline === today;
+    const today = now.toISOString().split('T')[0];
+    return task.deadline === today && !overdueTasks && !urgentTasks;
   }).length;
 
   return (
@@ -859,6 +984,9 @@ const TodoApp = ({ user, onLogout }) => {
             <span>{completedTasks}/{totalTasks} completadas</span>
             {overdueTasks > 0 && (
               <span className="overdue-count"> • {overdueTasks} vencidas</span>
+            )}
+            {urgentTasks > 0 && (
+              <span className="urgent-count"> • {urgentTasks} urgentes</span>
             )}
             {todayTasks > 0 && (
               <span className="today-count"> • {todayTasks} para hoy</span>
@@ -884,7 +1012,6 @@ const TodoApp = ({ user, onLogout }) => {
         ))}
       </div>
 
-      {/* Alertas flotantes */}
       <FloatingAlerts tasks={userTasks} />
     </div>
   );
