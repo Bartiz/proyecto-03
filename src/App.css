@@ -1654,7 +1654,7 @@ input[type="text"]:focus {
   ALERTAS FLOTANTES
    ================================ */
 
-  .floating-alerts {
+   .floating-alerts {
     position: fixed;
     top: 20px;
     right: 20px;
@@ -1791,7 +1791,7 @@ input[type="text"]:focus {
   }
   
   /* ================================
-    ANIMACIONES
+     ANIMACIONES
      ================================ */
   
   @keyframes slideInRight {
@@ -1826,7 +1826,7 @@ input[type="text"]:focus {
   }
   
   /* ================================
-    RESPONSIVE PARA ALERTAS FLOTANTES
+     RESPONSIVE PARA ALERTAS FLOTANTES COMPACTAS
      ================================ */
   
   @media (max-width: 768px) {
@@ -1900,13 +1900,13 @@ input[type="text"]:focus {
   }
   
   /* ================================
-    EFECTOS ESPECIALES
+     EFECTOS ESPECIALES AJUSTADOS
      ================================ */
   
-  /* Efecto de pulsación para alertas críticas */
+  /* Efecto de pulsación para alertas críticas (más sutil) */
   .floating-alert.overdue {
     animation: slideInRight 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55), 
-              subtlePulse 3s ease-in-out 2s infinite;
+               subtlePulse 3s ease-in-out 2s infinite;
   }
   
   @keyframes subtlePulse {
@@ -1922,7 +1922,7 @@ input[type="text"]:focus {
     }
   }
   
-  /* Efecto de brillo sutil para alertas de hoy */
+  /* Efecto de brillo sutil para alertas de hoy (más discreto) */
   .floating-alert.today::before {
     content: '';
     position: absolute;
@@ -1945,7 +1945,7 @@ input[type="text"]:focus {
     }
   }
   
-  /* Indicador de progreso para auto-dismiss */
+  /* Indicador de progreso para auto-dismiss (opcional) */
   .floating-alert.auto-dismiss::after {
     content: '';
     position: absolute;
@@ -1985,7 +1985,7 @@ input[type="text"]:focus {
     background: rgba(102, 126, 234, 0.1);
   }
   
-  /* Dark mode support */
+  /* Dark mode support (preparación futura) */
   @media (prefers-color-scheme: dark) {
     .floating-alert {
       background: #2d3748;
